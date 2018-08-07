@@ -104,7 +104,7 @@ You can then filter using the following syntax:
 
 ```graphql
 {
-  offers(product_color: "red") {
+  offers(product_color:"red") {
     edges {
       node {
         id
@@ -122,7 +122,7 @@ Or order your results like:
 
 ```graphql
 {
-  offers(order: {product_releaseDate: "DESC"}) {
+  offers(order:{product_releaseDate:"DESC"}) {
     edges {
       node {
         id
@@ -135,6 +135,80 @@ Or order your results like:
   }
 }
 ```
+Another difference with the REST API filters is that the keyword `_list` must be used instead of the traditional `[]` to filter over multiple values.
+
+For example, if you want to search the offers with a green or a red product you can use the following syntax:
+```graphql
+{
+  offers(product_color_list:["red", "green"]) {
+    edges {
+      node {
+        id
+        product {
+          name
+          color
+        }
+      }
+    }
+  }
+}
+```
+
+## Pagination
+
+API Platform natively enables a cursor-based pagination for collections.
+It supports [GraphQL's complete connection model](https://graphql.org/learn/pagination/#complete-connection-model) and is compatible with [Relay's Cursor Connections Specification](https://facebook.github.io/relay/graphql/connections.htm).
+
+Here is an example query leveraging the pagination system:
+
+```graphql
+{
+  offers(first:10 after:"cursor") {
+    totalCount
+    pageInfo {
+      startCursor
+      endCursor
+      hasNextPage
+    }
+    edges {
+      cursor
+      node {
+        id
+      }
+    }
+  }
+}
+```
+
+2 parameter pairs work with the query: `first`, `after` and `last`, `before`
+
+* `first` are the items per page starting from the beginning
+* `after` is the offset which accepts a `cursor`
+
+* `last` are the items per page starting from the end
+* `before` is the offset but handled backwards
+
+The current page queried page does always have a `startCursor` and an `endCursor`. 
+So to get to the next page you would simple add the `endCursor` from the current page to the after parameter.
+
+```graphql
+{
+  offers(first:10 after:"endCursor") {
+  }
+}
+```
+
+And for the previous page you would do the same but with `last`, `before` and `startCursor`:
+
+```graphql
+{
+  offers(last:10 before:"startCursor") {
+  }
+}
+```
+
+How do you know where the last page is? There is this property under `pageInfo` called `hasNextPage`.
+When this is false, you know this is the last page and moving forward will give you an empty result.
 
 ## Security (`access_control`)
 
